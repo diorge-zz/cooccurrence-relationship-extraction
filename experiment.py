@@ -26,11 +26,19 @@ class FilterSentencesByOccurrence:
         output_dir = os.path.join(state['output_directory'],
                                   self.OUTPUT_SUBDIRECTORY)
         os.makedirs(output_dir)
-        svo_path = os.path.join(output_dir, self.NEW_SVO_FILENAME)
+        new_svo_path = os.path.join(output_dir, self.NEW_SVO_FILENAME)
         
-        # TODO: write to svo_path
+        with open(state['svo'], 'r') as old_svo:
+            with open(new_svo_path, 'w') as new_svo:
+                self._filter(old_svo, new_svo)
 
-        return {'svo': svo_path}
+        return {'svo': new_svo_path}
+
+    def _filter(self, instream, outstream):
+        for line in instream:
+            s, v, o, n = line.split('\t')
+            if int(n) >= self.min_occurrences:
+                outstream.write(line)
 
 
 def run_experiment(steps, output_directory):
