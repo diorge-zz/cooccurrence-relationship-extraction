@@ -3,20 +3,22 @@
 
 
 import os
-import re
 
 
 class Experiment:
     """Manages the state of a running experiment
     """
-    def __init__(self, output_dir, cache_dir=None, files=None, data=None, *steps):
-        self.output_dir = output_dir
-        self.cache_dir = cache_dir
+    def __init__(self, output_dir, cache_dir, *steps):
+        self.output_dir = os.path.expanduser(output_dir)
+        if cache_dir is not None:
+            self.cache_dir = os.path.expanduser(cache_dir)
+        else:
+            self.cache_dir = None
         self._steps = tuple(steps)
         self._executed_steps = []
         self._pending_execution = list(reversed(self._steps))
-        self.files = files or {}
-        self.data = data or {}
+        self.files = {}
+        self.data = {}
 
     def prepare(self):
         """Reads the cache and creates directory structure
@@ -36,7 +38,7 @@ class Experiment:
             execution_string += str(step)
             for step_output in step.creates():
                 if execution_string + '.' + step_output in cache_filenames:
-                    src = os.path.join(os.path.abspath(self.cache_dir),
+                    src = os.path.join(os.path.expanduser(self.cache_dir),
                                        execution_string + '.' + step_output)
                     os.symlink(src, os.path.join(path, step_output))
             execution_string += '.'
@@ -52,7 +54,7 @@ class Experiment:
         """
         return '.'.join(str(step) for step in self._executed_steps)
 
-    def execute_step(self, cache):
+    def execute_step(self):
         """Executes the next step
 
         :param cache: bool, if should cache results
@@ -61,10 +63,11 @@ class Experiment:
             raise ValueError('No steps left to execute')
 
         current_step = self._pending_execution.pop()
+        cache = current_step.cache
         step_output_dir = os.path.join(self.output_dir, str(current_step))
 
         # checking cache
-        if self.cache_dir is not None:
+        if cache and self.cache_dir is not None:
             saved_outputs = len(os.listdir(step_output_dir))
         else:
             saved_outputs = 0
@@ -95,38 +98,56 @@ class Experiment:
             if cache:
                 cache_filename = os.path.join(self.cache_dir,
                                               self.executed_string() + '.' + new_file)
-                os.symlink(os.path.abspath(new_path), cache_filename)
+                os.symlink(os.path.expanduser(new_path), cache_filename)
 
 
 
     def execute_all(self):
         while self.steps_pending() > 0:
-            self.execute_step(False)
+            self.execute_step()
+
+
+class ReadSvo:
+    def __init__(self, svopath, alias):
+        self.svopath = svopath
+        self.alias = alias
+        self.cache = False
+
+    def __repr__(self):
+        return f'Read_svo_{self.alias}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return []
+
+    def creates(self):
+        return ['svo']
+
+    def returns(self):
+        return []
+
+    def apply(self, output_dir, **kwargs):
+        write_path = os.path.join(output_dir, 'svo')
+        os.symlink(os.path.expanduser(self.svopath), os.path.expanduser(write_path))
 
 
 class FilterSentencesByOccurrence:
-
-    def __init__(self, min_occurrences):
+    def __init__(self, min_occurrences, cache=True):
         if min_occurrences <= 0:
             raise ValueError('min_occurrences must be positive')
         self.min_occurrences = min_occurrences
-
+        self.cache = cache
 
     def __repr__(self):
         return f'Filter_sentences_by_occurrence_{self.min_occurrences}'
 
     def __str__(self):
         return repr(self)
-
-    @staticmethod
-    def parse(representation):
-        regex = r'^Filter_sentences_by_occurrence_(\d+)$'
-        result = re.findall(regex, representation)
-        if len(result) != 1:
-            raise ValueError('Invalid representation')
-
-        min_occurrences = int(result[0])
-        return FilterSentencesByOccurrence(min_occurrences)
 
     def required_files(self):
         return ['svo']
