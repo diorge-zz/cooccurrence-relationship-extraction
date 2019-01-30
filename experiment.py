@@ -3,6 +3,8 @@
 
 
 import os
+import numpy as np
+from collections import defaultdict
 
 
 class Experiment:
@@ -66,14 +68,17 @@ class Experiment:
         cache = current_step.cache
         step_output_dir = os.path.join(self.output_dir, str(current_step))
 
+
         # checking cache
         if cache and self.cache_dir is not None:
             saved_outputs = len(os.listdir(step_output_dir))
         else:
             saved_outputs = 0
         intended_outputs = len(current_step.creates())
+        creates_memory_objects = len(current_step.returns()) > 0
 
-        if intended_outputs > saved_outputs:
+
+        if creates_memory_objects or intended_outputs > saved_outputs:
             try:
                 for required_file in current_step.required_files():
                     if required_file not in self.files:
@@ -134,7 +139,7 @@ class ReadSvo:
         os.symlink(os.path.expanduser(self.svopath), os.path.expanduser(write_path))
 
 
-class ReadCategories:
+class ReadCategory:
     def __init__(self, path, number=1, cache=False):
         self.path = path
         self.category = os.path.basename(path)
@@ -160,9 +165,56 @@ class ReadCategories:
         return [f'cat{self.number}']
 
     def apply(self, **kwargs):
-        return {f'cat{self.number}': tuple(self.load())}
+        return {f'cat{self.number}': set(self.load())}
 
     def load(self):
         with open(os.path.expanduser(self.path)) as entries:
             for entry in entries:
                 yield entry.strip()
+
+
+class SvoMemoryData:
+    """After the SVO has been preprocessed,
+    load the remaining values into memory indexes
+    """
+    def __init__(self, cache=False):
+        self.cache = cache
+
+    def __repr__(self):
+        return 'Svo_to_memory'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return ['svo']
+
+    def required_data(self):
+        return []
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['pair_to_contexts', 'contexts_to_pairs', 'unique_contexts']
+
+    def apply(self, svo, **kwargs):
+        pair_to_contexts = defaultdict(lambda: [])
+        contexts_to_pairs = defaultdict(lambda: [])
+        unique_contexts = set()
+
+        with open(svo) as svo_contents:
+            for line in svo_contents:
+                s, v, o, n = line.split('\t')
+                n = int(n)
+                pair = tuple(sorted([s, o]))
+                rev = pair == tuple([s, o])
+                pair_to_contexts[pair].append((v, n, rev))
+                contexts_to_pairs[v].append((pair, n))
+                unique_contexts.add(v)
+
+        ucontexts_array = np.array(sorted(unique_contexts))
+
+        return {'pair_to_contexts': pair_to_contexts,
+                'contexts_to_pairs': contexts_to_pairs,
+                'unique_contexts': ucontexts_array}
