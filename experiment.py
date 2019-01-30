@@ -100,18 +100,16 @@ class Experiment:
                                               self.executed_string() + '.' + new_file)
                 os.symlink(os.path.expanduser(new_path), cache_filename)
 
-
-
     def execute_all(self):
         while self.steps_pending() > 0:
             self.execute_step()
 
 
 class ReadSvo:
-    def __init__(self, svopath, alias):
+    def __init__(self, svopath, cache=False):
         self.svopath = svopath
-        self.alias = alias
-        self.cache = False
+        self.alias = os.path.basename(svopath)
+        self.cache = cache
 
     def __repr__(self):
         return f'Read_svo_{self.alias}'
@@ -134,42 +132,3 @@ class ReadSvo:
     def apply(self, output_dir, **kwargs):
         write_path = os.path.join(output_dir, 'svo')
         os.symlink(os.path.expanduser(self.svopath), os.path.expanduser(write_path))
-
-
-class FilterSentencesByOccurrence:
-    def __init__(self, min_occurrences, cache=True):
-        if min_occurrences <= 0:
-            raise ValueError('min_occurrences must be positive')
-        self.min_occurrences = min_occurrences
-        self.cache = cache
-
-    def __repr__(self):
-        return f'Filter_sentences_by_occurrence_{self.min_occurrences}'
-
-    def __str__(self):
-        return repr(self)
-
-    def required_files(self):
-        return ['svo']
-
-    def required_data(self):
-        return []
-
-    def creates(self):
-        return ['svo']
-
-    def returns(self):
-        return []
-
-    def apply(self, output_dir, svo, **kwargs):
-        new_svo_path = os.path.join(output_dir, 'svo')
-        
-        with open(svo, 'r') as old_svo:
-            with open(new_svo_path, 'w') as new_svo:
-                self._filter(old_svo, new_svo)
-
-    def _filter(self, instream, outstream):
-        for line in instream:
-            s, v, o, n = line.split('\t')
-            if int(n) >= self.min_occurrences:
-                outstream.write(line)
