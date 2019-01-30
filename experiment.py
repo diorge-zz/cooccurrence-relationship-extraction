@@ -132,3 +132,37 @@ class ReadSvo:
     def apply(self, output_dir, **kwargs):
         write_path = os.path.join(output_dir, 'svo')
         os.symlink(os.path.expanduser(self.svopath), os.path.expanduser(write_path))
+
+
+class ReadCategories:
+    def __init__(self, path, number=1, cache=False):
+        self.path = path
+        self.category = os.path.basename(path)
+        self.number = number
+        self.cache = cache
+
+    def __repr__(self):
+        return f'Read_category_{self.category}_{self.number}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return []
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return [f'cat{self.number}']
+
+    def apply(self, **kwargs):
+        return {f'cat{self.number}': tuple(self.load())}
+
+    def load(self):
+        with open(os.path.expanduser(self.path)) as entries:
+            for entry in entries:
+                yield entry.strip()
