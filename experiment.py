@@ -22,6 +22,9 @@ class Experiment:
         self.files = {}
         self.data = {}
 
+    def add_file(self, name, path):
+        self.files[name] = os.path.expanduser(path)
+
     def prepare(self):
         """Reads the cache and creates directory structure
         """
@@ -110,35 +113,6 @@ class Experiment:
             self.execute_step()
 
 
-class ReadSvo:
-    def __init__(self, svopath, cache=False):
-        self.svopath = svopath
-        self.alias = os.path.basename(svopath)
-        self.cache = cache
-
-    def __repr__(self):
-        return f'Read_svo_{self.alias}'
-
-    def __str__(self):
-        return repr(self)
-
-    def required_files(self):
-        return []
-
-    def required_data(self):
-        return []
-
-    def creates(self):
-        return ['svo']
-
-    def returns(self):
-        return []
-
-    def apply(self, output_dir, **kwargs):
-        write_path = os.path.join(output_dir, 'svo')
-        os.symlink(os.path.expanduser(self.svopath), os.path.expanduser(write_path))
-
-
 class ReadCategory:
     def __init__(self, path, number=1, cache=False):
         self.path = path
@@ -173,7 +147,7 @@ class ReadCategory:
                 yield entry.strip()
 
 
-class SvoMemoryData:
+class SvoToMemory:
     """After the SVO has been preprocessed,
     load the remaining values into memory indexes
     """
