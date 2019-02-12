@@ -3,6 +3,7 @@ import os
 import experiment
 import preproc
 import ontext
+import classifier_features as classifier
 
 
 def main():
@@ -24,7 +25,8 @@ def main():
             ontext.BuildCooccurrenceMatrix(),
             ontext.NormalizeMatrix(),
             ontext.OntextKmeans(k=5),
-            ontext.InstanceRanker())
+            ontext.InstanceRanker(),
+            classifier.InstanceFrequencyCount())
 
     exp.add_file('svo', BASE_SVO)
     exp.prepare()
@@ -32,6 +34,8 @@ def main():
 
     print(exp.data['relation_names'])
     print(exp.data['instances_scores'])
+    print(exp.data['mean_instance_frequency_cat1'])
+    print(exp.data['mean_instance_frequency_cat2'])
 
 
 if __name__ == '__main__':
