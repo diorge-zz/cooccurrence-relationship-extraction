@@ -3,6 +3,7 @@
 
 
 import os
+import shutil
 import numpy as np
 from collections import defaultdict
 
@@ -39,7 +40,9 @@ class Experiment:
         execution_string = ''
         for step in self._steps:
             path = os.path.join(self.output_dir, str(step))
-            os.mkdir(path)
+            if os.path.exists(path):
+                shutil.rmtree(path)
+            os.makedirs(path)
             execution_string += str(step)
             for step_output in step.creates():
                 if execution_string + '.' + step_output in cache_filenames:
@@ -106,7 +109,8 @@ class Experiment:
             if cache:
                 cache_filename = os.path.join(self.cache_dir,
                                               self.executed_string() + '.' + new_file)
-                os.symlink(os.path.expanduser(new_path), cache_filename)
+                if not os.path.exists(cache_filename):
+                    os.symlink(os.path.expanduser(new_path), cache_filename)
 
     def execute_all(self):
         while self.steps_pending() > 0:
