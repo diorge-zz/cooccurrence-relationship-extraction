@@ -17,8 +17,7 @@ def main():
     output_dir = os.path.join(OUTPUT_BASE_DIR, now)
 
     exp = experiment.Experiment(output_dir, CACHE_DIR,
-            experiment.ReadCategory(CATEGORY1, 1),
-            experiment.ReadCategory(CATEGORY2, 2),
+            experiment.ReadCategories(CATEGORY1, CATEGORY2),
             preproc.FilterSentencesByOccurrence(5),
             preproc.FilterInstanceInCategory(),
             experiment.SvoToMemory(),

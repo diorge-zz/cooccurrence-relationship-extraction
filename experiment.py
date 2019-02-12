@@ -117,15 +117,16 @@ class Experiment:
             self.execute_step()
 
 
-class ReadCategory:
-    def __init__(self, path, number=1, cache=False):
-        self.path = path
-        self.category = os.path.basename(path)
-        self.number = number
+class ReadCategories:
+    def __init__(self, path1, path2, cache=False):
+        self.path1 = path1
+        self.category1 = os.path.basename(path1)
+        self.path2 = path2
+        self.category2 = os.path.basename(path2)
         self.cache = cache
 
     def __repr__(self):
-        return f'Read_category_{self.category}_{self.number}'
+        return f'Read_categories_{self.category1}_{self.category2}'
 
     def __str__(self):
         return repr(self)
@@ -140,13 +141,14 @@ class ReadCategory:
         return []
 
     def returns(self):
-        return [f'cat{self.number}']
+        return ['cat1', 'cat2']
 
     def apply(self, **kwargs):
-        return {f'cat{self.number}': set(self.load())}
+        return {'cat1': set(self.load(self.path1)),
+                'cat2': set(self.load(self.path2))}
 
-    def load(self):
-        with open(os.path.expanduser(self.path)) as entries:
+    def load(self, path):
+        with open(os.path.expanduser(path)) as entries:
             for entry in entries:
                 yield entry.strip()
 
