@@ -125,7 +125,7 @@ class InstanceRanker:
         self.cache = cache
 
     def __repr__(self):
-        return 'InstanceRanker'
+        return 'Instance_ranker'
 
     def __str__(self):
         return repr(self)

@@ -17,7 +17,7 @@ class InstanceFrequencyCount:
         self.cache = cache
 
     def __repr__(self):
-        return 'InstanceFrequencyCount'
+        return 'Instance_frequency_count'
 
     def __str__(self):
         return repr(self)
