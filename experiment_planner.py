@@ -26,8 +26,10 @@ def main():
             ontext.NormalizeMatrix(),
             ontext.OntextKmeans(k=5),
             ontext.InstanceRanker(),
-            classifier.InstanceFrequencyCount())
+            classifier.InstanceFrequencyCount(),
+            classifier.Specifity())
 
+    exp.add_file('raw_svo', BASE_SVO)
     exp.add_file('svo', BASE_SVO)
     exp.prepare()
     exp.execute_all()
@@ -36,6 +38,7 @@ def main():
     print(exp.data['instances_scores'])
     print(exp.data['mean_instance_frequency_cat1'])
     print(exp.data['mean_instance_frequency_cat2'])
+    print(exp.data['relation_specifity_df'])
 
 
 if __name__ == '__main__':
