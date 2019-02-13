@@ -134,7 +134,8 @@ class InstanceRanker:
         return []
 
     def required_data(self):
-        return ['contexts_to_pairs', 'groups', 'comatrix', 'relation_count']
+        return ['contexts_to_pairs', 'groups', 'comatrix', 'relation_count',
+                'unique_contexts', 'cluster_data']
 
     def creates(self):
         return []
