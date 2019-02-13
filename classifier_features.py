@@ -91,7 +91,7 @@ class Specifity:
         return ['raw_svo']
 
     def required_data(self):
-        return ['cat1', 'cat2']
+        return ['cat1', 'cat2', 'relation_names']
 
     def creates(self):
         return []
@@ -124,3 +124,34 @@ class Specifity:
                                 counter[v]['cooccurrence_count_question'] += 1
 
         return {'relation_specifity_df': pd.DataFrame(counter).T}
+
+
+class PatternContextSize:
+    def __init__(self, cache=False):
+        self.cache = cache
+
+    def __repr__(self):
+        return 'Pattern_context_size'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['relation_names', 'groups']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['pattern_context_size_df']
+
+    def apply(self, relation_names, groups, **kwargs):
+        cluster_sizes = pd.value_counts(pd.Series(groups)).sort_index().values
+        pattern_context = pd.DataFrame({'relation': relation_names,
+                                        'pattern context size': cluster_sizes})
+        pattern_context.set_index('relation', inplace=True)
+
+        return {'pattern_context_size_df': pattern_context}

@@ -93,9 +93,9 @@ class Experiment:
                     if required_data not in self.data:
                         raise ValueError(f'Missing data {required_data} for step {current_step}')
 
-                new_data = current_step.apply(**{**self.files,
-                                                 **self.data,
-                                                 'output_dir': step_output_dir})
+                args = {**self.files, **self.data, 'output_dir': step_output_dir}
+                new_data = current_step.apply(**args)
+
                 if new_data is not None:
                     self.data.update(new_data)
             except Exception as e:

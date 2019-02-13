@@ -27,7 +27,9 @@ def main():
             ontext.OntextKmeans(k=5),
             ontext.InstanceRanker(),
             classifier.InstanceFrequencyCount(),
-            classifier.Specifity())
+            classifier.Specifity(),
+            classifier.PatternContextSize()
+            )
 
     exp.add_file('raw_svo', BASE_SVO)
     exp.add_file('svo', BASE_SVO)
@@ -39,6 +41,7 @@ def main():
     print(exp.data['mean_instance_frequency_cat1'])
     print(exp.data['mean_instance_frequency_cat2'])
     print(exp.data['relation_specifity_df'])
+    print(exp.data['pattern_context_size_df'])
 
 
 if __name__ == '__main__':
