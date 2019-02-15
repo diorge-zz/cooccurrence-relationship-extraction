@@ -160,3 +160,60 @@ class InstanceRanker:
                         scores[-1][pair] += n / (1 + sd)
 
         return {'instances_scores': [dict(score) for score in scores]}
+
+
+class EvidenceForPromotion:
+    def __init__(self, promoted_instances, cache=False):
+        self.promoted_instances = promoted_instances
+        self.cache = cache
+
+    def __repr__(self):
+        return f'Evidence_for_promotion_{self.promoted_instances}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['instances_scores', 'pair_to_contexts']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['group_pairs', 'promoted_pairs', 'evidence_sentences']
+
+    def apply(self, instances_scores, pair_to_contexts, **kwargs):
+        all_group_pairs = []
+        all_promoted_pairs = []
+        all_evidence_sentences = []
+
+        for group_id, scores in enumerate(instances_scores):
+            sorted_scores = sorted(scores.items(), reverse=True)
+            group_pairs = [pair for (pair, score) in sorted_scores]
+            top_pairs = group_pairs[:self.promoted_instances]
+
+            evidence_sentences_gen = self.sentences_with_pairs(pair_to_contexts, top_pairs)
+            evidence_sentences = np.array(list(evidence_sentences_gen))
+
+            all_group_pairs.append(group_pairs)
+            all_promoted_pairs.append(top_pairs)
+            all_evidence_sentences.append(evidence_sentences)
+
+        return {'group_pairs': all_group_pairs,
+                'promoted_pairs': all_promoted_pairs,
+                'evidence_sentences': all_evidence_sentences}
+            
+    def sentences_with_pairs(self, pair_to_contexts, pairs):
+        """The sentences in pair_to_contexts in which the pair is
+        in the pairs collection
+        """
+        for pair in pairs:
+            s, o = pair
+            for context, occurrence_count, ordering in pair_to_contexts[pair]:
+                if ordering:
+                    yield ' '.join([s, context, o])
+                else:
+                    yield ' '.join([o, context, s])

@@ -43,7 +43,7 @@ they occur with (also with the number of occurrences `N`,
 and a boolean indicating if the pair is reversed, as `O, V, S`).
 
 - Created by: SvoToMemory
-- Used by: ontext.BuildCooccurrenceMatrix
+- Used by: ontext.BuildCooccurrenceMatrix, ontext.EvidenceForPromotion
 
 ## contexts_to_pairs
 
@@ -116,7 +116,7 @@ Simply the number of relations in the clustering
 Score of each instance (i.e. context) in relation to its closest centroid
 
 - Created by: ontext.InstanceRanker
-- Used by:
+- Used by: ontext.EvidenceForPromotion
 
 ## mean_instance_frequency_cat1 and mean_instance_frequency_cat2
 
@@ -130,3 +130,21 @@ The mean frequency of the relation-instances of each category.
 DataFrame with the specifity values for each relation
 
 - Created by: classifier.Specifity
+
+## group_pairs
+
+A list containing all the (S, O) pairs that occur with a
+context in the group (one entry in the list for each group).
+
+- Created by: ontext.EvidenceForPromotion
+
+## promoted_pairs
+
+The same as `group_pairs` but only the N top-scoring pairs
+
+- Created by: ontext.EvidenceForPromotion
+
+## evidence_sentences
+
+All sentences in the corpus that happen with a pair
+in the `promoted pairs` (one entry in the list for each group)

@@ -26,6 +26,7 @@ def main():
             ontext.NormalizeMatrix(),
             ontext.OntextKmeans(k=5),
             ontext.InstanceRanker(),
+            ontext.EvidenceForPromotion(promoted_instances=50),
             classifier.InstanceFrequencyCount(),
             classifier.Specifity(),
             classifier.PatternContextSize()
@@ -38,10 +39,7 @@ def main():
 
     print(exp.data['relation_names'])
     print(exp.data['instances_scores'])
-    print(exp.data['mean_instance_frequency_cat1'])
-    print(exp.data['mean_instance_frequency_cat2'])
-    print(exp.data['relation_specifity_df'])
-    print(exp.data['pattern_context_size_df'])
+    print(exp.data['promoted_pairs'])
 
 
 if __name__ == '__main__':
