@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from collections import defaultdict
+from operator import itemgetter
 
 
 class InstanceFrequencyCount:
@@ -155,3 +156,64 @@ class PatternContextSize:
         pattern_context.set_index('relation', inplace=True)
 
         return {'pattern_context_size_df': pattern_context}
+
+
+class RelationshipCharacteristics:
+    def __init__(self, cache=False):
+        self.cache = cache
+
+    def __repr__(self):
+        return 'Relationship_characteristics'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return ['instance_frequency_cat1', 'instance_frequency_cat2']
+
+    def required_data(self):
+        return ['group_pairs', 'cat1', 'cat2']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['commonest_instances_frequencies']
+
+    def apply(self, group_pairs, cat1, cat2,
+              instance_frequency_cat1, instance_frequency_cat2, **kwargs):
+        
+        final_frequencies = []
+
+        for pairs in group_pairs:
+            commonest_c1_inst, cc1inst_count = self.most_cooccurring_category_instance(pairs, cat1)
+            commonest_c2_inst, cc2inst_count = self.most_cooccurring_category_instance(pairs, cat2)
+
+            # yes, it is divided by the length of the other category
+            normalized_cc1instcount = cc1inst_count / len(cat2)
+            normalized_cc2instcount = cc2inst_count / len(cat1)
+
+            c1_frequencies_df = pd.read_csv(instance_frequency_cat1).set_index('instance')
+            c2_frequencies_df = pd.read_csv(instance_frequency_cat2).set_index('instance')
+
+            commonest_c1_freq = c1_frequencies_df.loc[commonest_c1_inst, 'frequency']
+            commonest_c2_freq = c2_frequencies_df.loc[commonest_c2_inst, 'frequency']
+
+            frequencies = (cc1inst_count, normalized_cc1instcount,
+                           cc2inst_count, normalized_cc2instcount)
+            final_frequencies.append(frequencies)
+
+        return {'commonest_instances_frequencies': final_frequencies}
+
+    def most_cooccurring_category_instance(self, pairs, instances):
+        cooccurrences = defaultdict(lambda: 0)
+        for a, b in pairs:
+            # simply sorting which is the instance
+            # and the co-occurrence
+            if a not in instances:
+                a, b = b, a
+            instance, cooccurrence = a, b
+
+            cooccurrences[instance] += 1
+
+        return max(cooccurrences.items(), key=itemgetter(1))

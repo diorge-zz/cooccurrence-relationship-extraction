@@ -25,6 +25,7 @@ The DataFrame with the count of the frequencies,
 before taking the mean as a classifier feature.
 
 - Created by: classifier.InstanceFrequencyCount
+- Used by: classifier.RelationshipCharacteristics
 
 
 # Data
@@ -34,7 +35,7 @@ before taking the mean as a classifier feature.
 Sets of instances of the categories (actual `set` objects).
 
 - Created by: experiment.ReadCategories
-- Used by: preproc.FilterInstanceInCategory, classifier.InstanceFrequencyCount, classifier.Specifity
+- Used by: preproc.FilterInstanceInCategory, classifier.InstanceFrequencyCount, classifier.Specifity, classifier.RelationshipCharacteristics
 
 ## pair_to_contexts
 
@@ -137,6 +138,7 @@ A list containing all the (S, O) pairs that occur with a
 context in the group (one entry in the list for each group).
 
 - Created by: ontext.EvidenceForPromotion
+- Used by: classifier.RelationshipCharacteristics
 
 ## promoted_pairs
 
@@ -148,3 +150,14 @@ The same as `group_pairs` but only the N top-scoring pairs
 
 All sentences in the corpus that happen with a pair
 in the `promoted pairs` (one entry in the list for each group)
+
+## commonest_instances_frequencies
+
+The frequency and normalized frequency of the most common
+instance, for each of the groups. It is a list with
+size equal to the number of groups,
+and each element is a 4-tuple with
+(Frequency of MC1, Normalized frequency of MC1, Freq. MC2, N.Freq. MC2),
+with MC1 and MC2 being the most common instances of each category
+
+- Created by: classifier.RelationshipCharacteristics

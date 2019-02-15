@@ -29,7 +29,8 @@ def main():
             ontext.EvidenceForPromotion(promoted_instances=50),
             classifier.InstanceFrequencyCount(),
             classifier.Specifity(),
-            classifier.PatternContextSize()
+            classifier.PatternContextSize(),
+            classifier.RelationshipCharacteristics(),
             )
 
     exp.add_file('raw_svo', BASE_SVO)
@@ -40,6 +41,7 @@ def main():
     print(exp.data['relation_names'])
     print(exp.data['instances_scores'])
     print(exp.data['promoted_pairs'])
+    print(exp.data['commonest_instances_frequencies'])
 
 
 if __name__ == '__main__':
