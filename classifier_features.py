@@ -172,7 +172,7 @@ class RelationshipCharacteristics:
         return ['instance_frequency_cat1', 'instance_frequency_cat2']
 
     def required_data(self):
-        return ['group_pairs', 'cat1', 'cat2']
+        return ['group_pairs', 'cat1', 'cat2', 'relation_names']
 
     def creates(self):
         return []
@@ -180,7 +180,7 @@ class RelationshipCharacteristics:
     def returns(self):
         return ['commonest_instances_frequencies']
 
-    def apply(self, group_pairs, cat1, cat2,
+    def apply(self, group_pairs, cat1, cat2, relation_names,
               instance_frequency_cat1, instance_frequency_cat2, **kwargs):
         
         final_frequencies = []
@@ -203,7 +203,14 @@ class RelationshipCharacteristics:
                            cc2inst_count, normalized_cc2instcount)
             final_frequencies.append(frequencies)
 
-        return {'commonest_instances_frequencies': final_frequencies}
+        column_names = ['Commonest Cat1 Instance frequency',
+                        'Commonest Cat1 Instance normalized frequency',
+                        'Commonest Cat2 Instance frequency',
+                        'Commonest Cat2 Instance normalized frequency']
+
+        frequencies_df = pd.DataFrame(final_frequencies, columns=column_names,
+                                      index=relation_names)
+        return {'commonest_instances_frequencies': frequencies_df}
 
     def most_cooccurring_category_instance(self, pairs, instances):
         cooccurrences = defaultdict(lambda: 0)

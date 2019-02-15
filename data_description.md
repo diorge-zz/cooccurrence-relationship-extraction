@@ -154,10 +154,6 @@ in the `promoted pairs` (one entry in the list for each group)
 ## commonest_instances_frequencies
 
 The frequency and normalized frequency of the most common
-instance, for each of the groups. It is a list with
-size equal to the number of groups,
-and each element is a 4-tuple with
-(Frequency of MC1, Normalized frequency of MC1, Freq. MC2, N.Freq. MC2),
-with MC1 and MC2 being the most common instances of each category
+instance, for each of the groups, in DataFrame format
 
 - Created by: classifier.RelationshipCharacteristics
