@@ -31,6 +31,7 @@ def main():
             classifier.Specifity(),
             classifier.PatternContextSize(),
             classifier.RelationshipCharacteristics(),
+            classifier.FeatureAggregator()
             )
 
     exp.add_file('raw_svo', BASE_SVO)

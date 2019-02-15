@@ -157,3 +157,9 @@ The frequency and normalized frequency of the most common
 instance, for each of the groups, in DataFrame format
 
 - Created by: classifier.RelationshipCharacteristics
+
+## classification_data
+
+Final DataFrame to be used when training the classifier.
+
+- Created by: classifier.FeatureAggregator

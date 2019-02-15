@@ -224,3 +224,38 @@ class RelationshipCharacteristics:
             cooccurrences[instance] += 1
 
         return max(cooccurrences.items(), key=itemgetter(1))
+
+
+class FeatureAggregator:
+    def __init__(self, cache=False):
+        self.cache = cache
+
+    def __repr__(self):
+        return 'Feature_aggregator'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['relation_names']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['classification_data']
+
+    def apply(self, relation_names, **kwargs):
+        current = pd.DataFrame(index=relation_names)
+
+        df_names = ['pattern_context_size_df',
+                    'commonest_instances_frequencies',
+                    'pattern_specifity_df']
+        for df_name in df_names:
+            if df_name in kwargs:
+                current = current.join(kwargs[df_name])
+        
+        return {'classification_data': current}
