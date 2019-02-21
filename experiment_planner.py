@@ -18,21 +18,22 @@ def main():
     output_dir = os.path.join(OUTPUT_BASE_DIR, now)
 
     exp = experiment.Experiment(output_dir, CACHE_DIR,
-            experiment.ReadCategories(CATEGORY1, CATEGORY2),
-            preproc.FilterSentencesByOccurrence(5),
-            preproc.FilterInstanceInCategory(),
-            experiment.SvoToMemory(),
-            ontext.BuildCooccurrenceMatrix(),
-            ontext.NormalizeMatrix(),
-            ontext.OntextKmeans(k=5),
-            ontext.InstanceRanker(),
-            ontext.EvidenceForPromotion(promoted_instances=50),
-            classifier.InstanceFrequencyCount(),
-            classifier.Specifity(),
-            classifier.PatternContextSize(),
-            classifier.RelationshipCharacteristics(),
-            classifier.FeatureAggregator()
-            )
+            steps=(
+                experiment.ReadCategories(CATEGORY1, CATEGORY2),
+                preproc.FilterSentencesByOccurrence(5),
+                preproc.FilterInstanceInCategory(),
+                experiment.SvoToMemory(),
+                ontext.BuildCooccurrenceMatrix(),
+                ontext.NormalizeMatrix(),
+                ontext.OntextKmeans(k=5),
+                ontext.InstanceRanker(),
+                ontext.EvidenceForPromotion(promoted_instances=50),
+                classifier.InstanceFrequencyCount(),
+                classifier.Specifity(),
+                classifier.PatternContextSize(),
+                classifier.RelationshipCharacteristics(),
+                classifier.FeatureAggregator()),
+            prefix='sample4m')
 
     exp.add_file('raw_svo', BASE_SVO)
     exp.add_file('svo', BASE_SVO)

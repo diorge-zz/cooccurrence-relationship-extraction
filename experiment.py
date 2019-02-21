@@ -11,7 +11,10 @@ from collections import defaultdict
 class Experiment:
     """Manages the state of a running experiment
     """
-    def __init__(self, output_dir, cache_dir, *steps):
+    def __init__(self, output_dir, cache_dir, steps, prefix=''):
+        """The prefix is used to identify the cache step;
+        it should be used to guide the cache w.r.t. the base files
+        """
         self.output_dir = os.path.expanduser(output_dir)
         if cache_dir is not None:
             self.cache_dir = os.path.expanduser(cache_dir)
@@ -22,6 +25,7 @@ class Experiment:
         self._pending_execution = list(reversed(self._steps))
         self.files = {}
         self.data = {}
+        self.prefix = prefix
 
     def add_file(self, name, path):
         self.files[name] = os.path.expanduser(path)
@@ -37,7 +41,7 @@ class Experiment:
         # creates a directory for each step.
         # if the output of a step is in the cache,
         # then creates a symbolic link to the cache
-        execution_string = ''
+        execution_string = self.prefix
         for step in self._steps:
             path = os.path.join(self.output_dir, str(step))
             if os.path.exists(path):
