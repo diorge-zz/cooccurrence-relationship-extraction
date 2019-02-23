@@ -32,7 +32,7 @@ def main():
                 classifier.Specifity(),
                 classifier.PatternContextSize(),
                 classifier.RelationshipCharacteristics(),
-                classifier.FeatureAggregator()),
+                classifier.FeatureAggregator(save_output=True)),
             prefix='sample4m')
 
     exp.add_file('raw_svo', BASE_SVO)

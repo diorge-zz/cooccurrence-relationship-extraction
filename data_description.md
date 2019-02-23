@@ -27,6 +27,13 @@ before taking the mean as a classifier feature.
 - Created by: classifier.InstanceFrequencyCount
 - Used by: classifier.RelationshipCharacteristics
 
+## classifier_data
+
+The same as the data `classification_data`,
+but saved into a CSV file.
+
+- Created by: classifier.FeatureAggregator
+
 
 # Data
 

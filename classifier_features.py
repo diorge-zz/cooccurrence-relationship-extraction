@@ -227,7 +227,8 @@ class RelationshipCharacteristics:
 
 
 class FeatureAggregator:
-    def __init__(self, cache=False):
+    def __init__(self, *, save_output=False, cache=False):
+        self.save_output = save_output
         self.cache = cache
 
     def __repr__(self):
@@ -243,12 +244,14 @@ class FeatureAggregator:
         return ['relation_names']
 
     def creates(self):
+        if self.save_output:
+            return ['classifier_data']
         return []
 
     def returns(self):
         return ['classification_data']
 
-    def apply(self, relation_names, **kwargs):
+    def apply(self, relation_names, output_dir, **kwargs):
         current = pd.DataFrame(index=relation_names)
 
         df_names = ['pattern_context_size_df',
@@ -257,5 +260,8 @@ class FeatureAggregator:
         for df_name in df_names:
             if df_name in kwargs:
                 current = current.join(kwargs[df_name])
+
+        if self.save_output:
+            current.to_csv(os.path.join(output_dir, 'classifier_data'))
         
         return {'classification_data': current}
