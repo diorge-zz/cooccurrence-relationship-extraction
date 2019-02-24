@@ -3,6 +3,7 @@
 
 
 import os
+from collections import defaultdict
 
 
 class FilterSentencesByOccurrence:
@@ -83,3 +84,56 @@ class FilterInstanceInCategory:
 
                     if lefttoright or righttoleft:
                         outstream.write(line)
+
+
+class MinimumContextOccurrence:
+    """Filters SVO to only contexts
+    that happens in a minimum number of
+    different sentences.
+    
+    Makes two passes in the SVO
+    """
+    def __init__(self, minimum_sentences, cache=True):
+        if minimum_sentences <= 0:
+            raise ValueError('minimum_sentences must be positive')
+        self.minimum_sentences = minimum_sentences
+        self.cache = cache
+
+    def __repr__(self):
+        return f'Minimum_context_occurrence_{self.minimum_sentences}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return ['svo']
+
+    def required_data(self):
+        return []
+
+    def creates(self):
+        return ['svo']
+
+    def returns(self):
+        return []
+
+    def apply(self, output_dir, svo, **kwargs):
+        with open(svo, 'r') as svo_file:
+            occ = self.count(svo_file)
+
+        new_svo_path = os.path.join(output_dir, 'svo')
+        with open(new_svo_path, 'w') as outstream:
+            with open(svo, 'r') as instream:
+                for line in instream:
+                    s, v, o, n = line.split('\t')
+                    if occ[v] >= self.minimum_sentences:
+                        outstream.write(line)
+
+
+    def count(self, svo_file):
+        occurrences = defaultdict(lambda: 0)
+        for line in svo_file:
+            s, v, o, n = line.split('\t')
+            occurrences[v] += 1
+
+        return occurrences

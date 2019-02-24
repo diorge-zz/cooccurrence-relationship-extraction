@@ -21,6 +21,7 @@ def main():
             steps=(
                 experiment.ReadCategories(CATEGORY1, CATEGORY2),
                 preproc.FilterSentencesByOccurrence(5),
+                preproc.MinimumContextOccurrence(3),
                 preproc.FilterInstanceInCategory(),
                 experiment.SvoToMemory(),
                 ontext.BuildCooccurrenceMatrix(),
