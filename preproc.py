@@ -137,3 +137,53 @@ class MinimumContextOccurrence:
             occurrences[v] += 1
 
         return occurrences
+
+
+class MinimumPairOccurrence:
+    """Filter sentences with (S, O) pairs
+    that do not appear in a minimum of different sentences
+    """
+    def __init__(self, minimum, cache=True):
+        if minimum <= 1:
+            raise ValueError('minimum must be at least 2')
+        self.minimum = minimum
+        self.cache = cache
+
+    def __repr__(self):
+        return f'Minimum_pair_occurrence_{self.minimum}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return ['svo']
+
+    def required_data(self):
+        return []
+
+    def creates(self):
+        return ['svo']
+
+    def returns(self):
+        return []
+
+    def apply(self, output_dir, svo, **kwargs):
+        with open(svo) as svo_contents:
+            occ = self.count(svo_contents)
+
+        new_svo_path = os.path.join(output_dir, 'svo')
+        with open(new_svo_path, 'w') as outstream:
+            with open(svo, 'r') as instream:
+                for line in instream:
+                    s, v, o, n = line.split('\t')
+                    pair = frozenset([s, o])
+                    if occ[pair] >= self.minimum:
+                        outstream.write(line)
+
+    def count(self, svo):
+        occurrences = defaultdict(lambda: 0)
+        for line in svo:
+            s, v, o, n = line.split('\t')
+            pair = frozenset([s, o])
+            occurrences[pair] += 1
+        return occurrences

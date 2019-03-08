@@ -8,7 +8,7 @@ import classifier_features as classifier
 
 def main():
     CACHE_DIR = '~/data/ontext_experiments/cache'
-    BASE_SVO = '~/data/mall/sample4m.svo'
+    BASE_SVO = '~/data/mall/v+prep_svo-triples.txt'
     CATEGORY1 = '~/data/mall/instances/politicianus'
     CATEGORY2 = '~/data/mall/instances/religion'
     OUTPUT_BASE_DIR = '~/data/ontext_experiments'
@@ -22,6 +22,7 @@ def main():
                 experiment.ReadCategories(CATEGORY1, CATEGORY2),
                 preproc.FilterSentencesByOccurrence(5),
                 preproc.MinimumContextOccurrence(3),
+                preproc.MinimumPairOccurrence(5),
                 preproc.FilterInstanceInCategory(),
                 experiment.SvoToMemory(),
                 ontext.BuildCooccurrenceMatrix(),
@@ -34,7 +35,7 @@ def main():
                 classifier.PatternContextSize(),
                 classifier.RelationshipCharacteristics(),
                 classifier.FeatureAggregator(save_output=True)),
-            prefix='sample4m')
+            prefix='vpreptriples')
 
     exp.add_file('raw_svo', BASE_SVO)
     exp.add_file('svo', BASE_SVO)
