@@ -152,7 +152,7 @@ class PatternContextSize:
     def apply(self, relation_names, groups, **kwargs):
         cluster_sizes = pd.value_counts(pd.Series(groups)).sort_index().values
         pattern_context = pd.DataFrame({'relation': relation_names,
-                                        'pattern context size': cluster_sizes})
+                                        'Pattern Context Size': cluster_sizes})
         pattern_context.set_index('relation', inplace=True)
 
         return {'pattern_context_size_df': pattern_context}
