@@ -4,6 +4,7 @@
 
 import os
 import shutil
+import logging
 import numpy as np
 from collections import defaultdict
 
@@ -41,15 +42,20 @@ class Experiment:
         # creates a directory for each step.
         # if the output of a step is in the cache,
         # then creates a symbolic link to the cache
-        execution_string = self.prefix
+        execution_string = self.prefix + '.'
         for step in self._steps:
             path = os.path.join(self.output_dir, str(step))
             if os.path.exists(path):
+                logging.warning('Output directory already exists; removing current contents')
                 shutil.rmtree(path)
+            logging.debug(f'Creating directory {path}')
             os.makedirs(path)
             execution_string += str(step)
             for step_output in step.creates():
-                if execution_string + '.' + step_output in cache_filenames:
+                cache_file = execution_string + '.' + step_output
+                logging.debug(f'Checking for cache file {cache_file}')
+                if cache_file in cache_filenames:
+                    logging.info(f'Linking cache file {cache_file}')
                     src = os.path.join(os.path.expanduser(self.cache_dir),
                                        execution_string + '.' + step_output)
                     os.symlink(src, os.path.join(path, step_output))
@@ -64,7 +70,7 @@ class Experiment:
         """Returns the string of the executed steps so far,
         used for caching results
         """
-        return '.'.join(str(step) for step in self._executed_steps)
+        return self.prefix + '.' + '.'.join(str(step) for step in self._executed_steps)
 
     def execute_step(self):
         """Executes the next step
@@ -74,10 +80,12 @@ class Experiment:
         if self.steps_pending() == 0:
             raise ValueError('No steps left to execute')
 
+
         current_step = self._pending_execution.pop()
         cache = current_step.cache
         step_output_dir = os.path.join(self.output_dir, str(current_step))
 
+        logging.info(str(current_step))
 
         # checking cache
         if cache and self.cache_dir is not None:
@@ -87,8 +95,12 @@ class Experiment:
         intended_outputs = len(current_step.creates())
         creates_memory_objects = len(current_step.returns()) > 0
 
+        logging.debug((f'Saved outputs {saved_outputs} | '
+                       f'Intended outputs {intended_outputs} | '
+                       f'Creates mem obj {creates_memory_objects}'))
 
         if creates_memory_objects or intended_outputs > saved_outputs:
+            logging.debug('Executing step')
             try:
                 for required_file in current_step.required_files():
                     if required_file not in self.files:
@@ -105,6 +117,8 @@ class Experiment:
             except Exception as e:
                 self._pending_execution.append(current_step)
                 raise e
+        else:
+            logging.info('Step skipped, using cache')
         
         self._executed_steps.append(current_step)
         for new_file in current_step.creates():

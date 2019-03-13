@@ -1,27 +1,28 @@
 import datetime
 import os
+import logging
 import experiment
 import preproc
 import ontext
 import classifier_features as classifier
 
 
-CACHE_DIR = '~/data/ontext_experiments/cache'
-BASE_SVO = '~/data/mall/v+prep_svo-triples.txt'
-CATEGORY_DIR = '~/data/mall/instances'
-OUTPUT_BASE_DIR = '~/data/ontext_experiments'
+CACHE_DIR = os.path.expanduser('~/data/ontext_experiments/cache')
+BASE_SVO = os.path.expanduser('~/data/mall/v+prep_svo-triples.txt')
+CATEGORY_DIR = os.path.expanduser('~/data/mall/instances')
+OUTPUT_BASE_DIR = os.path.expanduser('~/data/ontext_experiments')
 DATETIME_FORMAT = '%Y_%m_%d.%H_%M_%S'
+LOGGING_FORMAT='%(levelname)s %(asctime)s %(funcName)s\t%(message)s'
 
-def run(category_pairs):
-    now = datetime.datetime.now().strftime(DATETIME_FORMAT)
+def run(category_pairs, output_dir):
 
     for cat1, cat2 in category_pairs:
         directory_name = '_'.join([cat1, cat2])
         cat1_dir = os.path.join(CATEGORY_DIR, cat1)
         cat2_dir = os.path.join(CATEGORY_DIR, cat2)
-        output_dir = os.path.join(OUTPUT_BASE_DIR, now, directory_name)
+        pair_output_dir = os.path.join(output_dir, directory_name)
 
-        exp = experiment.Experiment(output_dir, CACHE_DIR,
+        exp = experiment.Experiment(pair_output_dir, CACHE_DIR,
                 steps=(
                     preproc.FilterSentencesByOccurrence(5),
                     preproc.MinimumContextOccurrence(3),
@@ -48,6 +49,16 @@ def run(category_pairs):
 
 
 def main():
+    now = datetime.datetime.now().strftime(DATETIME_FORMAT)
+    output_dir = os.path.join(OUTPUT_BASE_DIR, now)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    logging_file = os.path.join(output_dir, 'log')
+
+    logging.basicConfig(filename=logging_file,
+                        level=logging.DEBUG,
+                        format=LOGGING_FORMAT)
+
     category_pairs = [('landscapefeatures', 'aquarium'),
                       ('politicianus', 'religion'),
                       ('stateorprovince', 'awardtrophytournament'),
@@ -58,7 +69,7 @@ def main():
                       ('weatherphenomenon', 'chemical'),
                       ('furniture', 'flooritem'),
                       ('shoppingmall', 'restaurant')]
-    run(category_pairs)
+    run(category_pairs, output_dir)
 
 
 if __name__ == '__main__':
