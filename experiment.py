@@ -74,8 +74,6 @@ class Experiment:
 
     def execute_step(self):
         """Executes the next step
-
-        :param cache: bool, if should cache results
         """
         if self.steps_pending() == 0:
             raise ValueError('No steps left to execute')
