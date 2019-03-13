@@ -101,22 +101,18 @@ class Experiment:
 
         if creates_memory_objects or intended_outputs > saved_outputs:
             logging.debug('Executing step')
-            try:
-                for required_file in current_step.required_files():
-                    if required_file not in self.files:
-                        raise ValueError(f'Missing file {required_file} for step {current_step}')
-                for required_data in current_step.required_data():
-                    if required_data not in self.data:
-                        raise ValueError(f'Missing data {required_data} for step {current_step}')
+            for required_file in current_step.required_files():
+                if required_file not in self.files:
+                    raise ValueError(f'Missing file {required_file} for step {current_step}')
+            for required_data in current_step.required_data():
+                if required_data not in self.data:
+                    raise ValueError(f'Missing data {required_data} for step {current_step}')
 
-                args = {**self.files, **self.data, 'output_dir': step_output_dir}
-                new_data = current_step.apply(**args)
+            args = {**self.files, **self.data, 'output_dir': step_output_dir}
+            new_data = current_step.apply(**args)
 
-                if new_data is not None:
-                    self.data.update(new_data)
-            except Exception as e:
-                self._pending_execution.append(current_step)
-                raise e
+            if new_data is not None:
+                self.data.update(new_data)
         else:
             logging.info('Step skipped, using cache')
         
