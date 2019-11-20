@@ -19,6 +19,42 @@ DATETIME_FORMAT = '%Y_%m_%d.%H_%M_%S'
 LOGGING_FORMAT = '%(levelname)s %(asctime)s %(funcName)s\t%(message)s'
 
 
+class SaveMemoryToDisk:
+    """Writes any data in the pipeline to the disk
+    """
+    def __init__(self, data_to_save, cache=False):
+        self.data_to_save = data_to_save
+        self.cache = cache
+
+    def __repr__(self):
+        return 'Save_memory_to_disk'
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return self.data_to_save
+
+    def creates(self):
+        return self.data_to_save
+
+    def returns(self):
+        return []
+
+    def apply(self, output_dir, **kwargs):
+        for data_key, data in kwargs.items():
+            if data_key in self.data_to_save:
+                filepath = os.path.join(output_dir, data_key)
+
+                with open(filepath, 'w') as output_handle:
+                    if issubclass(str, type(data)):
+                        output_handle.write(data)
+                    else:
+                        output_handle.write(str(data))
+
+        return {}
+
+
 def run(category_pairs, output_dir):
 
     for cat1, cat2 in category_pairs:
@@ -43,7 +79,9 @@ def run(category_pairs, output_dir):
                      classifier.Specifity(),
                      classifier.PatternContextSize(),
                      classifier.RelationshipCharacteristics(),
-                     classifier.FeatureAggregator(save_output=True))
+                     classifier.FeatureAggregator(save_output=True),
+                     SaveMemoryToDisk(['promoted_pairs',
+                                       'evidence_sentences']))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
