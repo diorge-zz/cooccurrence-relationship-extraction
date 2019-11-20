@@ -1,6 +1,8 @@
 import itertools
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
+
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min
 
@@ -100,7 +102,7 @@ class OntextKmeans:
         return []
 
     def returns(self):
-        return ['cluster_data', 'groups', 'centroids','medoids',
+        return ['cluster_data', 'groups', 'centroids', 'medoids',
                 'relation_names', 'relation_count']
 
     def apply(self, comatrix, unique_contexts, **kwargs):
@@ -195,7 +197,8 @@ class EvidenceForPromotion:
             group_pairs = [pair for (pair, score) in sorted_scores]
             top_pairs = group_pairs[:self.promoted_instances]
 
-            evidence_sentences_gen = self.sentences_with_pairs(pair_to_contexts, top_pairs)
+            evidence_sentences_gen = \
+                self.sentences_with_pairs(pair_to_contexts, top_pairs)
             evidence_sentences = np.array(list(evidence_sentences_gen))
 
             all_group_pairs.append(group_pairs)
@@ -205,7 +208,7 @@ class EvidenceForPromotion:
         return {'group_pairs': all_group_pairs,
                 'promoted_pairs': all_promoted_pairs,
                 'evidence_sentences': all_evidence_sentences}
-            
+
     def sentences_with_pairs(self, pair_to_contexts, pairs):
         """The sentences in pair_to_contexts in which the pair is
         in the pairs collection

@@ -1,7 +1,8 @@
 import os
-import pandas as pd
 from collections import defaultdict
 from operator import itemgetter
+
+import pandas as pd
 
 
 class InstanceFrequencyCount:
@@ -38,7 +39,7 @@ class InstanceFrequencyCount:
     def apply(self, raw_svo, cat1, cat2, output_dir, **kwargs):
         frequencies1 = self.count(raw_svo, cat1)
         frequencies2 = self.count(raw_svo, cat2)
-        
+
         freq1_df = pd.DataFrame({'instance': list(frequencies1.keys()),
                                  'frequency': list(frequencies1.values())})
         freq2_df = pd.DataFrame({'instance': list(frequencies2.keys()),
@@ -46,12 +47,17 @@ class InstanceFrequencyCount:
 
         # "normalizes" by settings the range 0-1 linearly,
         # ie. divides by the maximum
-        freq1_df['normalized'] = freq1_df['frequency'] / freq1_df['frequency'].max()
-        freq2_df['normalized'] = freq2_df['frequency'] / freq2_df['frequency'].max()
+        freq1_max = freq1_df['frequency'].max()
+        freq2_max = freq2_df['frequency'].max()
+
+        freq1_df['normalized'] = freq1_df['frequency'] / freq1_max
+        freq2_df['normalized'] = freq2_df['frequency'] / freq2_max
 
         # save intermediate step for later inspection
-        freq1_df.to_csv(os.path.join(output_dir, 'instance_frequency_cat1'), index=False)
-        freq2_df.to_csv(os.path.join(output_dir, 'instance_frequency_cat2'), index=False)
+        freq1_df.to_csv(os.path.join(output_dir, 'instance_frequency_cat1'),
+                        index=False)
+        freq2_df.to_csv(os.path.join(output_dir, 'instance_frequency_cat2'),
+                        index=False)
 
         # actual feature
         mean1 = freq1_df['normalized'].mean()
@@ -182,22 +188,32 @@ class RelationshipCharacteristics:
 
     def apply(self, group_pairs, cat1, cat2, relation_names,
               instance_frequency_cat1, instance_frequency_cat2, **kwargs):
-        
+
         final_frequencies = []
 
         for pairs in group_pairs:
-            commonest_c1_inst, cc1inst_count = self.most_cooccurring_category_instance(pairs, cat1)
-            commonest_c2_inst, cc2inst_count = self.most_cooccurring_category_instance(pairs, cat2)
+            c1_commonest = self.most_cooccurring_category_instance(pairs, cat1)
+            commonest_c1_inst, cc1inst_count = c1_commonest
+
+            c2_commonest = self.most_cooccurring_category_instance(pairs, cat2)
+            commonest_c2_inst, cc2inst_count = c2_commonest
 
             # yes, it is divided by the length of the other category
             normalized_cc1instcount = cc1inst_count / len(cat2)
             normalized_cc2instcount = cc2inst_count / len(cat1)
 
-            c1_frequencies_df = pd.read_csv(instance_frequency_cat1).set_index('instance')
-            c2_frequencies_df = pd.read_csv(instance_frequency_cat2).set_index('instance')
+            # when revisiting this code,
+            # I couldn't understand what the below is supposed to do
 
-            commonest_c1_freq = c1_frequencies_df.loc[commonest_c1_inst, 'frequency']
-            commonest_c2_freq = c2_frequencies_df.loc[commonest_c2_inst, 'frequency']
+            # c1_frequencies_df = (pd.read_csv(instance_frequency_cat1)
+            #                        .set_index('instance'))
+            # c2_frequencies_df = (pd.read_csv(instance_frequency_cat2)
+            #                        .set_index('instance'))
+
+            # commonest_c1_freq = c1_frequencies_df.loc[commonest_c1_inst,
+            #                                           'frequency']
+            # commonest_c2_freq = c2_frequencies_df.loc[commonest_c2_inst,
+            #                                           'frequency']
 
             frequencies = (cc1inst_count, normalized_cc1instcount,
                            cc2inst_count, normalized_cc2instcount)
@@ -219,7 +235,7 @@ class RelationshipCharacteristics:
             # and the co-occurrence
             if a not in instances:
                 a, b = b, a
-            instance, cooccurrence = a, b
+            instance, _ = a, b
 
             cooccurrences[instance] += 1
 
@@ -263,5 +279,5 @@ class FeatureAggregator:
 
         if self.save_output:
             current.to_csv(os.path.join(output_dir, 'classifier_data'))
-        
+
         return {'classification_data': current}

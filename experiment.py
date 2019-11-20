@@ -2,11 +2,12 @@
 """
 
 
+import logging
 import os
 import shutil
-import logging
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
 
 
 class Experiment:
@@ -46,7 +47,8 @@ class Experiment:
         for step in self._steps:
             path = os.path.join(self.output_dir, str(step))
             if os.path.exists(path):
-                logging.warning('Output directory already exists; removing current contents')
+                logging.warning('Output directory already exists;'
+                                'removing current contents')
                 shutil.rmtree(path)
             logging.debug(f'Creating directory {path}')
             os.makedirs(path)
@@ -70,14 +72,14 @@ class Experiment:
         """Returns the string of the executed steps so far,
         used for caching results
         """
-        return self.prefix + '.' + '.'.join(str(step) for step in self._executed_steps)
+        return self.prefix + '.' + '.'.join(str(step)
+                                            for step in self._executed_steps)
 
     def execute_step(self):
         """Executes the next step
         """
         if self.steps_pending() == 0:
             raise ValueError('No steps left to execute')
-
 
         current_step = self._pending_execution.pop()
         cache = current_step.cache
@@ -101,10 +103,12 @@ class Experiment:
             logging.debug('Executing step')
             for required_file in current_step.required_files():
                 if required_file not in self.files:
-                    raise ValueError(f'Missing file {required_file} for step {current_step}')
+                    raise ValueError(f'Missing file {required_file}'
+                                     f'for step {current_step}')
             for required_data in current_step.required_data():
                 if required_data not in self.data:
-                    raise ValueError(f'Missing data {required_data} for step {current_step}')
+                    raise ValueError(f'Missing data {required_data}'
+                                     f'for step {current_step}')
 
             args = {**self.files, **self.data, 'output_dir': step_output_dir}
             new_data = current_step.apply(**args)
@@ -113,16 +117,16 @@ class Experiment:
                 self.data.update(new_data)
         else:
             logging.info('Step skipped, using cache')
-        
+
         self._executed_steps.append(current_step)
         for new_file in current_step.creates():
             new_path = os.path.join(step_output_dir, new_file)
             self.files[new_file] = new_path
             if cache:
-                cache_filename = os.path.join(self.cache_dir,
-                                              self.executed_string() + '.' + new_file)
-                if not os.path.exists(cache_filename):
-                    os.symlink(os.path.expanduser(new_path), cache_filename)
+                cache_filename = self.executed_string() + '.' + new_file
+                cache_path = os.path.join(self.cache_dir, cache_filename)
+                if not os.path.exists(cache_path):
+                    os.symlink(os.path.expanduser(new_path), cache_path)
 
     def execute_all(self):
         while self.steps_pending() > 0:

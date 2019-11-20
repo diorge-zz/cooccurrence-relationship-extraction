@@ -33,7 +33,7 @@ class FilterSentencesByOccurrence:
 
     def apply(self, output_dir, svo, **kwargs):
         new_svo_path = os.path.join(output_dir, 'svo')
-        
+
         with open(svo, 'r') as old_svo:
             with open(new_svo_path, 'w') as new_svo:
                 self._filter(old_svo, new_svo)
@@ -90,7 +90,7 @@ class MinimumContextOccurrence:
     """Filters SVO to only contexts
     that happens in a minimum number of
     different sentences.
-    
+
     Makes two passes in the SVO
     """
     def __init__(self, minimum_sentences, cache=True):
@@ -128,7 +128,6 @@ class MinimumContextOccurrence:
                     s, v, o, n = line.split('\t')
                     if occ[v] >= self.minimum_sentences:
                         outstream.write(line)
-
 
     def count(self, svo_file):
         occurrences = defaultdict(lambda: 0)
