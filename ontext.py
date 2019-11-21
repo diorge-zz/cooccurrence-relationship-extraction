@@ -1,4 +1,5 @@
 import itertools
+import logging
 from collections import defaultdict
 
 import numpy as np
@@ -106,7 +107,18 @@ class OntextKmeans:
                 'relation_names', 'relation_count']
 
     def apply(self, comatrix, unique_contexts, **kwargs):
+        if comatrix.size == 0:
+            logging.info('comatrix is shaped (0, 0)')
+
+            return {'cluster_data': None,
+                    'groups': [],
+                    'centroids': [],
+                    'medoids': [],
+                    'relation_names': [],
+                    'relation_count': 0}
+
         clusterer = KMeans(n_clusters=self.k, init='k-means++')
+
         clusterer.fit(comatrix)
 
         groups = clusterer.predict(comatrix)
