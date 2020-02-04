@@ -81,7 +81,13 @@ def run(category_pairs, output_dir):
                      classifier.RelationshipCharacteristics(),
                      classifier.FeatureAggregator(save_output=True),
                      SaveMemoryToDisk(['promoted_pairs',
-                                       'evidence_sentences']))
+                                       'evidence_sentences',
+                                       'groups',
+                                       'centroids',
+                                       'medoids',
+                                       'relation_names',
+                                       'relation_count',
+                                       'unique_contexts']))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
