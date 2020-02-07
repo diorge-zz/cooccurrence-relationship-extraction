@@ -70,7 +70,7 @@ def run(category_pairs, output_dir):
                      experiment.ReadCategories(cat1_dir, cat2_dir),
                      preproc.FilterInstanceInCategory(),
                      experiment.SvoToMemory(),
-                     ontext.BuildCooccurrenceMatrix(),
+                     ontext.BuildCooccurrenceMatrix(cache=True),
                      ontext.NormalizeMatrix(),
                      ontext.OntextKmeans(k=5),
                      ontext.InstanceRanker(),
