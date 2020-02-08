@@ -4,8 +4,6 @@ import os
 from collections import namedtuple
 from typing import Dict, List, Tuple
 
-import classifier_features as classifier
-
 import experiment
 
 import numpy as np
@@ -86,20 +84,7 @@ def run(category_pairs, output_dir):
                      ontext.NormalizeMatrix(),
                      ontext.OntextKmeans(k=5),
                      ontext.InstanceRanker(),
-                     ontext.EvidenceForPromotion(promoted_instances=50),
-                     classifier.InstanceFrequencyCount(),
-                     classifier.Specifity(),
-                     classifier.PatternContextSize(),
-                     classifier.RelationshipCharacteristics(),
-                     classifier.FeatureAggregator(save_output=True),
-                     SaveMemoryToDisk(['promoted_pairs',
-                                       'evidence_sentences',
-                                       'groups',
-                                       'centroids',
-                                       'medoids',
-                                       'relation_names',
-                                       'relation_count',
-                                       'unique_contexts']))
+                     ontext.EvidenceForPromotion(promoted_instances=50))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
