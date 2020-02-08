@@ -1,12 +1,18 @@
 import datetime
 import logging
 import os
+from collections import namedtuple
+from typing import Dict, List, Tuple
 
 import classifier_features as classifier
 
 import experiment
 
+import numpy as np
+
 import ontext
+
+import pandas as pd
 
 import preproc
 
@@ -56,6 +62,12 @@ class SaveMemoryToDisk:
 
 
 def run(category_pairs, output_dir):
+    Relation = namedtuple('Relation', ['cat1', 'cat2', 'name', 'cluster_size',
+                                       'examples'])
+    Context = namedtuple('Context', ['cat1', 'cat2', 'relation', 'context'])
+
+    relations: List[Relation] = []
+    contexts: List[Context] = []
 
     for cat1, cat2 in category_pairs:
         try:
@@ -98,9 +110,44 @@ def run(category_pairs, output_dir):
             exp.add_file('svo', BASE_SVO)
             exp.prepare()
             exp.execute_all()
+
+            # array of strings
+            relation_names: np.array = exp.data['relation_names']
+
+            # array of integers (group index)
+            groups: np.array = exp.data['groups']
+
+            # array of strings
+            unique_contexts: np.array = exp.data['unique_contexts']
+
+            promoted_pairs: List[Tuple[str, str]] = exp.data['promoted_pairs']
+
+            group_indexes, cluster_count = np.unique(groups,
+                                                     return_counts=True)
+
+            cluster_sizes: Dict[int, int] = dict(zip(group_indexes,
+                                                     cluster_count))
+
+            for group_index, relation_name in enumerate(relation_names):
+                relation = Relation(cat1,
+                                    cat2,
+                                    relation_name,
+                                    cluster_sizes[group_index],
+                                    promoted_pairs[group_index])
+                relations.append(relation)
+
+            for relation_index, context_name in zip(groups, unique_contexts):
+                context = Context(cat1,
+                                  cat2,
+                                  relation_names[relation_index],
+                                  context_name)
+                contexts.append(context)
         except Exception as e:
             print(f'Category pair {cat1}, {cat2} failed')
             print(str(e))
+
+    pd.DataFrame(relations).to_csv(output_dir + '/relations.csv', index=False)
+    pd.DataFrame(contexts).to_csv(output_dir + '/contexts.csv', index=False)
 
 
 def main():
@@ -114,16 +161,7 @@ def main():
                         level=logging.DEBUG,
                         format=LOGGING_FORMAT)
 
-    category_pairs = [('landscapefeatures', 'aquarium'),
-                      ('politicianus', 'religion'),
-                      ('stateorprovince', 'awardtrophytournament'),
-                      ('televisionshow', 'vehicle'),
-                      ('hallwayitem', 'sportsleague'),
-                      ('geometricshape', 'building'),
-                      ('arthropod', 'vertebrate'),
-                      ('weatherphenomenon', 'chemical'),
-                      ('furniture', 'flooritem'),
-                      ('shoppingmall', 'restaurant')]
+    category_pairs = [('landscapefeatures', 'aquarium')]
     run(category_pairs, output_dir)
 
 
