@@ -2,13 +2,13 @@ import datetime
 import logging
 import os
 from collections import namedtuple
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import experiment
 
-import numpy as np
+import ncm
 
-import ontext
+import numpy as np
 
 import pandas as pd
 
@@ -80,11 +80,10 @@ def run(category_pairs, output_dir):
                      experiment.ReadCategories(cat1_dir, cat2_dir),
                      preproc.FilterInstanceInCategory(),
                      experiment.SvoToMemory(),
-                     ontext.BuildCooccurrenceMatrix(cache=True),
-                     ontext.NormalizeMatrix(),
-                     ontext.OntextKmeans(k=5),
-                     ontext.InstanceRanker(),
-                     ontext.EvidenceForPromotion(promoted_instances=50))
+                     ncm.BuildCooccurrenceGraph(),
+                     ncm.NcmHcsw(),
+                     ncm.Medoids(),
+                     SaveMemoryToDisk(['groups']))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
@@ -105,8 +104,6 @@ def run(category_pairs, output_dir):
             # array of strings
             unique_contexts: np.array = exp.data['unique_contexts']
 
-            promoted_pairs: List[Tuple[str, str]] = exp.data['promoted_pairs']
-
             group_indexes, cluster_count = np.unique(groups,
                                                      return_counts=True)
 
@@ -118,7 +115,7 @@ def run(category_pairs, output_dir):
                                     cat2,
                                     relation_name,
                                     cluster_sizes[group_index],
-                                    promoted_pairs[group_index])
+                                    None)
                 relations.append(relation)
 
             for relation_index, context_name in zip(groups, unique_contexts):
@@ -134,6 +131,8 @@ def run(category_pairs, output_dir):
     pd.DataFrame(relations).to_csv(output_dir + '/relations.csv', index=False)
     pd.DataFrame(contexts).to_csv(output_dir + '/contexts.csv', index=False)
 
+    return exp
+
 
 def main():
     now = datetime.datetime.now().strftime(DATETIME_FORMAT)
@@ -147,7 +146,7 @@ def main():
                         format=LOGGING_FORMAT)
 
     category_pairs = [('landscapefeatures', 'aquarium')]
-    run(category_pairs, output_dir)
+    return run(category_pairs, output_dir)
 
 
 if __name__ == '__main__':
