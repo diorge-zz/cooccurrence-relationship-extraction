@@ -42,7 +42,14 @@ class BuildCooccurrenceGraph:
 
             for v1, v2 in itertools.combinations_with_replacement(contexts, 2):
                 # the contexts v1 and v2 co-occur within the same (S, O) pair
-                cograph.add_edge(v1, v2)
+                if cograph.has_edge(v1, v2):
+                    existing_edge = cograph[v1][v2]
+                    existing_weight = existing_edge['weight']
+                    new_edge_attr = {(v1, v2): {'weight': existing_weight + 1}}
+
+                    nx.set_edge_attributes(cograph, new_edge_attr)
+                else:
+                    cograph.add_edge(v1, v2, weight=1)
 
         return {'cograph': cograph}
 
@@ -69,8 +76,13 @@ class NcmHcsw:
     def returns(self):
         return ['groups']
 
-    def apply(self, cograph, unique_contexts, **kwargs):
-        result = hcsw.hcsw_disconnected(cograph)
+    def apply(self, cograph: nx.Graph, unique_contexts, **kwargs):
+        weights = [weight
+                   for (from_node, to_node, weight)
+                   in cograph.edges(data='weight')]
+        mean_weight = np.mean(weights)
+
+        result = hcsw.hcsw_disconnected(cograph, mean_weight * 2)
 
         groups = hcsw.label(result, unique_contexts)
 
