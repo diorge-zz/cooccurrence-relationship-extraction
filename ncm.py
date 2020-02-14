@@ -2,6 +2,9 @@
 
 
 import itertools
+from collections import defaultdict, namedtuple
+from operator import itemgetter
+from typing import Any, DefaultDict, Dict, List, Tuple
 
 import hcsw
 
@@ -129,3 +132,102 @@ class Medoids:
             medoids.append(unique_contexts[central_index])
 
         return {'relation_names': medoids}
+
+
+class PromotePairs:
+    def __init__(self,
+                 only_commonest: bool = True,
+                 pairs_to_promote: int = 50,
+                 cache: bool = False):
+        """only_commonest removes scores below 1
+        """
+        self.only_commonest = only_commonest
+        self.pairs_to_promote = pairs_to_promote
+        self.cache = cache
+
+    def __repr__(self):
+        return 'NcmPromotePairs'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['unique_contexts', 'groups', 'pair_to_contexts']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['promoted_pairs', 'group_pairs', 'groups_to_prune']
+
+    def apply(self,
+              unique_contexts: 'np.ndarray[str]',
+              groups: 'np.ndarray[int]',
+              pair_to_contexts: Dict[Tuple[str, str],
+                                     List[Tuple[str, int, bool]]],
+              **kwargs
+              ) -> Dict[str, Any]:
+
+        total_pairs = len(pair_to_contexts)
+        total_groups = groups.max() + 1
+
+        occurrence_count = np.zeros(shape=(total_pairs, total_groups))
+        pair_to_index: Dict[Tuple[str, str], int] = {}
+
+        for (name1, name2), context_list in pair_to_contexts.items():
+            index = len(pair_to_index)
+            pair_to_index[(name1, name2)] = index
+
+            for context, occurrences, is_reversed in context_list:
+                context_index = np.where(unique_contexts == context)[0]
+                group_index = groups[context_index]
+
+                occurrence_count[index, group_index] += occurrences
+
+        Score = namedtuple('Score', 'group score')
+
+        scores: Dict[Tuple[str, str], Score] = {}
+
+        for (name1, name2), index in pair_to_index.items():
+            vector = occurrence_count[index, :]
+            maximum_index = vector.argmax()
+            maximum = vector[maximum_index]
+
+            score = maximum / (vector.sum() - maximum + 1)
+
+            scores[name1, name2] = Score(maximum_index, score)
+
+        if self.only_commonest:
+            scores = {k: v for k, v in scores.items() if v.score >= 1}
+
+        group_pairs_dict: DefaultDict[int, List[Tuple[str, str, int]]] = \
+            defaultdict(list)
+
+        for (name1, name2), score in scores.items():
+            group_pairs_dict[score.group].append((name1, name2, score.score))
+
+        group_pairs = []
+        promoted_pairs = []
+        groups_to_prune = []
+
+        for i in range(total_groups):
+            candidates = group_pairs_dict[i]
+
+            # sort descending by score
+            candidates = sorted(candidates, key=itemgetter(2), reverse=True)
+
+            # throw away the score
+            candidates = [(c[0], c[1]) for c in candidates]
+
+            group_pairs.append(candidates)
+            promoted_pairs.append(candidates[:self.pairs_to_promote])
+
+            if not candidates:
+                groups_to_prune.append(i)
+
+        return {'group_pairs': group_pairs,
+                'promoted_pairs': promoted_pairs,
+                'groups_to_prune': groups_to_prune}

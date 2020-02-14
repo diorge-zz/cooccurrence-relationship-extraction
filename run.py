@@ -83,7 +83,9 @@ def run(category_pairs, output_dir):
                      ncm.BuildCooccurrenceGraph(),
                      ncm.NcmHcsw(),
                      ncm.Medoids(),
-                     SaveMemoryToDisk(['groups']))
+                     ncm.PromotePairs(),
+                     SaveMemoryToDisk(['groups', 'group_pairs',
+                                       'promoted_pairs', 'groups_to_prune']))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
