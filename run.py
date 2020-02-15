@@ -21,6 +21,7 @@ CATEGORY_DIR = os.path.expanduser('~/data/mall/instances')
 OUTPUT_BASE_DIR = os.path.expanduser('~/data/ontext_experiments')
 DATETIME_FORMAT = '%Y_%m_%d.%H_%M_%S'
 LOGGING_FORMAT = '%(levelname)s %(asctime)s %(funcName)s\t%(message)s'
+CATEGORIES_TABLE = os.path.expanduser('~/data/mall/Filt-Relations100')
 
 
 Relation = namedtuple('Relation', ['cat1', 'cat2', 'name',
@@ -164,6 +165,7 @@ def run(category_pairs, output_dir):
         except Exception as e:
             print(f'Category pair {cat1}, {cat2} failed')
             print(str(e))
+            raise
 
     pd.DataFrame(relations).to_csv(output_dir + '/relations.csv', index=False)
     pd.DataFrame(contexts).to_csv(output_dir + '/contexts.csv', index=False)
@@ -182,7 +184,13 @@ def main():
                         level=logging.DEBUG,
                         format=LOGGING_FORMAT)
 
-    category_pairs = [('landscapefeatures', 'aquarium')]
+    category_pairs_table = pd.read_table(CATEGORIES_TABLE,
+                                         sep='  ',
+                                         header=None,
+                                         engine='python',
+                                         names=['cat1', 'cat2', 'score'],
+                                         usecols=['cat1', 'cat2'])
+    category_pairs = category_pairs_table.apply(tuple, axis='columns').tolist()
     return run(category_pairs, output_dir)
 
 

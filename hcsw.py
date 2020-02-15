@@ -5,11 +5,15 @@ Based on "A clustering algorithm based on graph connectivity",
 """
 
 
+import logging
 from typing import Any, List
 
 import networkx as nx
 
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 def highly_connected(graph: nx.Graph,
@@ -33,19 +37,28 @@ def hcsw(graph: nx.Graph,
     Returns a graph with the same nodes but not necessarily connected
     """
 
+    number_of_nodes = graph.number_of_nodes()
+
+    logger.debug(f'Clustering graph with {number_of_nodes} nodes')
+
     # singular graphs are already clustered
-    if graph.number_of_nodes() < 2:
+    if number_of_nodes < 2:
+        logger.debug('Graph too small, exiting')
         return graph
 
     cut_weight, partitions = nx.algorithms.connectivity.stoer_wagner(graph)
 
     if not highly_connected(graph, cut_weight, multiplier_threshold):
+        logger.debug('Graph not dense, performing cut')
+
         sub_graphs = [graph.subgraph(v).copy() for v in partitions]
 
         component_1 = hcsw(sub_graphs[0])
         component_2 = hcsw(sub_graphs[1])
 
         graph = nx.compose(component_1, component_2)
+    else:
+        logger.debug('Graph is dense, skipping cut')
 
     return graph
 

@@ -50,7 +50,7 @@ class FilterInstanceInCategory:
     within the two categories
     """
     def __init__(self, reverse=True, cache=True):
-        self.reverse = True
+        self.reverse = reverse
         self.cache = cache
 
     def __repr__(self):

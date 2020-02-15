@@ -10,6 +10,9 @@ from collections import defaultdict
 import numpy as np
 
 
+logger = logging.getLogger(__name__)
+
+
 class Experiment:
     """Manages the state of a running experiment
     """
@@ -47,17 +50,17 @@ class Experiment:
         for step in self._steps:
             path = os.path.join(self.output_dir, str(step))
             if os.path.exists(path):
-                logging.warning('Output directory already exists;'
-                                'removing current contents')
+                logger.warning('Output directory already exists;'
+                               'removing current contents')
                 shutil.rmtree(path)
-            logging.debug(f'Creating directory {path}')
+            logger.debug(f'Creating directory {path}')
             os.makedirs(path)
             execution_string += str(step)
             for step_output in step.creates():
                 cache_file = execution_string + '.' + step_output
-                logging.debug(f'Checking for cache file {cache_file}')
+                logger.debug(f'Checking for cache file {cache_file}')
                 if cache_file in cache_filenames:
-                    logging.info(f'Linking cache file {cache_file}')
+                    logger.info(f'Linking cache file {cache_file}')
                     src = os.path.join(os.path.expanduser(self.cache_dir),
                                        execution_string + '.' + step_output)
                     os.symlink(src, os.path.join(path, step_output))
@@ -85,7 +88,7 @@ class Experiment:
         cache = current_step.cache
         step_output_dir = os.path.join(self.output_dir, str(current_step))
 
-        logging.info(str(current_step))
+        logger.info(f'Preparing step {str(current_step)}')
 
         # checking cache
         if cache and self.cache_dir is not None:
@@ -95,12 +98,12 @@ class Experiment:
         intended_outputs = len(current_step.creates())
         creates_memory_objects = len(current_step.returns()) > 0
 
-        logging.debug((f'Saved outputs {saved_outputs} | '
-                       f'Intended outputs {intended_outputs} | '
-                       f'Creates mem obj {creates_memory_objects}'))
+        logger.debug((f'Saved outputs {saved_outputs} | '
+                      f'Intended outputs {intended_outputs} | '
+                      f'Creates mem obj {creates_memory_objects}'))
 
         if creates_memory_objects or intended_outputs > saved_outputs:
-            logging.debug('Executing step')
+            logging.debug('fExecuting step {str(current_step)}')
             for required_file in current_step.required_files():
                 if required_file not in self.files:
                     raise ValueError(f'Missing file {required_file}'
@@ -116,7 +119,7 @@ class Experiment:
             if new_data is not None:
                 self.data.update(new_data)
         else:
-            logging.info('Step skipped, using cache')
+            logging.info('Step {str(current_step)} skipped, using cache')
 
         self._executed_steps.append(current_step)
         for new_file in current_step.creates():
