@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 from collections import namedtuple
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import experiment
 
@@ -84,8 +84,8 @@ def run(category_pairs, output_dir):
                      ncm.NcmHcsw(),
                      ncm.Medoids(),
                      ncm.PromotePairs(),
-                     SaveMemoryToDisk(['groups', 'group_pairs',
-                                       'promoted_pairs', 'groups_to_prune']))
+                     ncm.Pruner(),
+                     SaveMemoryToDisk(['groups', 'promoted_pairs']))
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
@@ -106,6 +106,9 @@ def run(category_pairs, output_dir):
             # array of strings
             unique_contexts: np.array = exp.data['unique_contexts']
 
+            promoted_pairs: List[List[Tuple[str, str]]] = \
+                exp.data['promoted_pairs']
+
             group_indexes, cluster_count = np.unique(groups,
                                                      return_counts=True)
 
@@ -113,19 +116,21 @@ def run(category_pairs, output_dir):
                                                      cluster_count))
 
             for group_index, relation_name in enumerate(relation_names):
-                relation = Relation(cat1,
-                                    cat2,
-                                    relation_name,
-                                    cluster_sizes[group_index],
-                                    None)
-                relations.append(relation)
+                if group_index in cluster_sizes:
+                    relation = Relation(cat1,
+                                        cat2,
+                                        relation_name,
+                                        cluster_sizes[group_index],
+                                        promoted_pairs[group_index])
+                    relations.append(relation)
 
             for relation_index, context_name in zip(groups, unique_contexts):
-                context = Context(cat1,
-                                  cat2,
-                                  relation_names[relation_index],
-                                  context_name)
-                contexts.append(context)
+                if relation_index != -1:
+                    context = Context(cat1,
+                                      cat2,
+                                      relation_names[relation_index],
+                                      context_name)
+                    contexts.append(context)
         except Exception as e:
             print(f'Category pair {cat1}, {cat2} failed')
             print(str(e))

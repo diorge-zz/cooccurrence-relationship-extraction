@@ -161,7 +161,7 @@ class PromotePairs:
         return []
 
     def returns(self):
-        return ['promoted_pairs', 'group_pairs', 'groups_to_prune']
+        return ['promoted_pairs', 'group_pairs']
 
     def apply(self,
               unique_contexts: 'np.ndarray[str]',
@@ -211,7 +211,6 @@ class PromotePairs:
 
         group_pairs = []
         promoted_pairs = []
-        groups_to_prune = []
 
         for i in range(total_groups):
             candidates = group_pairs_dict[i]
@@ -225,9 +224,53 @@ class PromotePairs:
             group_pairs.append(candidates)
             promoted_pairs.append(candidates[:self.pairs_to_promote])
 
-            if not candidates:
-                groups_to_prune.append(i)
-
         return {'group_pairs': group_pairs,
-                'promoted_pairs': promoted_pairs,
-                'groups_to_prune': groups_to_prune}
+                'promoted_pairs': promoted_pairs}
+
+
+class Pruner:
+    def __init__(self,
+                 keep_threshold: int = 1,
+                 cache=False):
+        """keeps groups with at least keep_threshold pairs
+        """
+        self.keep_threshold = keep_threshold
+        self.cache = cache
+
+    def __repr__(self):
+        return f'NcmPruner({self.keep_threshold})'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['promoted_pairs', 'groups', 'relation_names']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['pruned_groups', 'groups_old', 'groups']
+
+    def apply(self,
+              promoted_pairs: List[List[Tuple[str, str]]],
+              groups: 'np.ndarray[int]',
+              relation_names: 'np.ndarray[str]',
+              **kwargs
+              ) -> Dict[str, Any]:
+        groups_old = np.copy(groups)
+        groups_new = np.copy(groups)
+        pruned_groups: List[int] = []
+
+        for group_index, relation_index in enumerate(groups):
+            list_of_pairs = promoted_pairs[relation_index]
+            if len(list_of_pairs) < self.keep_threshold:
+                pruned_groups.append(group_index)
+                groups_new[group_index] = -1
+
+        return {'pruned_groups': pruned_groups,
+                'groups_old': groups_old,
+                'groups': groups_new}
