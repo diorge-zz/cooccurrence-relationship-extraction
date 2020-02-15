@@ -60,7 +60,7 @@ class Experiment:
                 cache_file = execution_string + '.' + step_output
                 logger.debug(f'Checking for cache file {cache_file}')
                 if cache_file in cache_filenames:
-                    logger.info(f'Linking cache file {cache_file}')
+                    logger.debug(f'Linking cache file {cache_file}')
                     src = os.path.join(os.path.expanduser(self.cache_dir),
                                        execution_string + '.' + step_output)
                     os.symlink(src, os.path.join(path, step_output))
@@ -88,7 +88,7 @@ class Experiment:
         cache = current_step.cache
         step_output_dir = os.path.join(self.output_dir, str(current_step))
 
-        logger.info(f'Preparing step {str(current_step)}')
+        logger.debug(f'Preparing step {str(current_step)}')
 
         # checking cache
         if cache and self.cache_dir is not None:
@@ -103,7 +103,7 @@ class Experiment:
                       f'Creates mem obj {creates_memory_objects}'))
 
         if creates_memory_objects or intended_outputs > saved_outputs:
-            logging.debug('fExecuting step {str(current_step)}')
+            logging.debug(f'Executing step {str(current_step)}')
             for required_file in current_step.required_files():
                 if required_file not in self.files:
                     raise ValueError(f'Missing file {required_file}'
@@ -119,7 +119,7 @@ class Experiment:
             if new_data is not None:
                 self.data.update(new_data)
         else:
-            logging.info('Step {str(current_step)} skipped, using cache')
+            logging.debug(f'Step {str(current_step)} skipped, using cache')
 
         self._executed_steps.append(current_step)
         for new_file in current_step.creates():

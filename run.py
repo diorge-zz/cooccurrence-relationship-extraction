@@ -30,6 +30,9 @@ Context = namedtuple('Context', ['cat1', 'cat2',
                                  'relation', 'context'])
 
 
+logger = logging.getLogger(__name__)
+
+
 class SaveMemoryToDisk:
     """Writes any data in the pipeline to the disk
     """
@@ -120,6 +123,10 @@ class BuildOutputReports:
                                   context_name)
                 contexts.append(context)
 
+        logger.info(f'Finished pair with'
+                    f' {len(relations)} relations'
+                    f' and {len(contexts)} contexts')
+
         return {'relations_output': relations,
                 'contexts_output': contexts}
 
@@ -128,7 +135,8 @@ def run(category_pairs, output_dir):
     relations: List[Relation] = []
     contexts: List[Context] = []
 
-    for cat1, cat2 in category_pairs:
+    for i, (cat1, cat2) in enumerate(category_pairs, 1):
+        logger.info(f'{cat1} x {cat2} ({i / len(category_pairs):.2%})')
         try:
             directory_name = '_'.join([cat1, cat2])
             cat1_dir = os.path.join(CATEGORY_DIR, cat1)
@@ -163,9 +171,8 @@ def run(category_pairs, output_dir):
             relations.extend(exp.data['relations_output'])
             contexts.extend(exp.data['contexts_output'])
         except Exception as e:
-            print(f'Category pair {cat1}, {cat2} failed')
-            print(str(e))
-            raise
+            logger.critical(f'Category pair {cat1}, {cat2} failed')
+            logger.critical(e)
 
     pd.DataFrame(relations).to_csv(output_dir + '/relations.csv', index=False)
     pd.DataFrame(contexts).to_csv(output_dir + '/contexts.csv', index=False)
@@ -173,24 +180,34 @@ def run(category_pairs, output_dir):
     return exp
 
 
-def main():
+def main(category_pairs: List[Tuple[str, str]] = None):
     now = datetime.datetime.now().strftime(DATETIME_FORMAT)
     output_dir = os.path.join(OUTPUT_BASE_DIR, now)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
+
+    logging_formatter = logging.Formatter(LOGGING_FORMAT)
     logging_file = os.path.join(output_dir, 'log')
 
     logging.basicConfig(filename=logging_file,
                         level=logging.DEBUG,
                         format=LOGGING_FORMAT)
 
-    category_pairs_table = pd.read_table(CATEGORIES_TABLE,
-                                         sep='  ',
-                                         header=None,
-                                         engine='python',
-                                         names=['cat1', 'cat2', 'score'],
-                                         usecols=['cat1', 'cat2'])
-    category_pairs = category_pairs_table.apply(tuple, axis='columns').tolist()
+    stdout_handle = logging.StreamHandler()
+    stdout_handle.setLevel(logging.INFO)
+    stdout_handle.setFormatter(logging_formatter)
+
+    logging.getLogger('').addHandler(stdout_handle)
+
+    if category_pairs is None:
+        category_pairs_table = pd.read_table(CATEGORIES_TABLE,
+                                             sep='  ',
+                                             header=None,
+                                             engine='python',
+                                             names=['cat1', 'cat2', 'score'],
+                                             usecols=['cat1', 'cat2'])
+        category_pairs = (category_pairs_table.apply(tuple, axis='columns')
+                                              .tolist())
     return run(category_pairs, output_dir)
 
 

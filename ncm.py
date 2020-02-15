@@ -2,6 +2,7 @@
 
 
 import itertools
+import logging
 from collections import defaultdict, namedtuple
 from operator import itemgetter
 from typing import Any, DefaultDict, Dict, List, Tuple
@@ -11,6 +12,9 @@ import hcsw
 import networkx as nx
 
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 class BuildCooccurrenceGraph:
@@ -53,6 +57,10 @@ class BuildCooccurrenceGraph:
                     nx.set_edge_attributes(cograph, new_edge_attr)
                 else:
                     cograph.add_edge(v1, v2, weight=1)
+
+        logger.info(f'Created cograph,'
+                    f' |V|={cograph.number_of_nodes()}'
+                    f' |E|={cograph.number_of_edges()}')
 
         return {'cograph': cograph}
 
