@@ -23,6 +23,12 @@ DATETIME_FORMAT = '%Y_%m_%d.%H_%M_%S'
 LOGGING_FORMAT = '%(levelname)s %(asctime)s %(funcName)s\t%(message)s'
 
 
+Relation = namedtuple('Relation', ['cat1', 'cat2', 'name',
+                                   'cluster_size', 'examples'])
+Context = namedtuple('Context', ['cat1', 'cat2',
+                                 'relation', 'context'])
+
+
 class SaveMemoryToDisk:
     """Writes any data in the pipeline to the disk
     """
@@ -59,11 +65,65 @@ class SaveMemoryToDisk:
         return {}
 
 
-def run(category_pairs, output_dir):
-    Relation = namedtuple('Relation', ['cat1', 'cat2', 'name', 'cluster_size',
-                                       'examples'])
-    Context = namedtuple('Context', ['cat1', 'cat2', 'relation', 'context'])
+class BuildOutputReports:
+    def __init__(self, cache=False):
+        self.cache = cache
 
+    def __repr__(self):
+        return 'Build_output_reports'
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['relation_names', 'groups',
+                'unique_contexts', 'promoted_pairs']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['relations_output', 'contexts_output']
+
+    def apply(self,
+              cat1_name: str,
+              cat2_name: str,
+              relation_names: 'np.array[str]',
+              groups: 'np.array[int]',
+              unique_contexts: 'np.array[str]',
+              promoted_pairs: List[List[Tuple[str, str]]],
+              **kwargs):
+        relations: List[Relation] = []
+        contexts: List[Context] = []
+
+        group_indexes, cluster_count = np.unique(groups,
+                                                 return_counts=True)
+
+        cluster_sizes: Dict[int, int] = dict(zip(group_indexes,
+                                                 cluster_count))
+
+        for group_index, relation_name in enumerate(relation_names):
+            if group_index in cluster_sizes:
+                relation = Relation(cat1_name,
+                                    cat2_name,
+                                    relation_name,
+                                    cluster_sizes[group_index],
+                                    promoted_pairs[group_index])
+                relations.append(relation)
+
+        for relation_index, context_name in zip(groups, unique_contexts):
+            if relation_index != -1:
+                context = Context(cat1_name,
+                                  cat2_name,
+                                  relation_names[relation_index],
+                                  context_name)
+                contexts.append(context)
+
+        return {'relations_output': relations,
+                'contexts_output': contexts}
+
+
+def run(category_pairs, output_dir):
     relations: List[Relation] = []
     contexts: List[Context] = []
 
@@ -85,7 +145,7 @@ def run(category_pairs, output_dir):
                      ncm.Medoids(),
                      ncm.PromotePairs(),
                      ncm.Pruner(),
-                     SaveMemoryToDisk(['groups', 'promoted_pairs']))
+                     BuildOutputReports())
 
             exp = experiment.Experiment(pair_output_dir,
                                         CACHE_DIR,
@@ -94,43 +154,13 @@ def run(category_pairs, output_dir):
 
             exp.add_file('raw_svo', BASE_SVO)
             exp.add_file('svo', BASE_SVO)
+            exp.data['cat1_name'] = cat1
+            exp.data['cat2_name'] = cat2
             exp.prepare()
             exp.execute_all()
 
-            # array of strings
-            relation_names: np.array = exp.data['relation_names']
-
-            # array of integers (group index)
-            groups: np.array = exp.data['groups']
-
-            # array of strings
-            unique_contexts: np.array = exp.data['unique_contexts']
-
-            promoted_pairs: List[List[Tuple[str, str]]] = \
-                exp.data['promoted_pairs']
-
-            group_indexes, cluster_count = np.unique(groups,
-                                                     return_counts=True)
-
-            cluster_sizes: Dict[int, int] = dict(zip(group_indexes,
-                                                     cluster_count))
-
-            for group_index, relation_name in enumerate(relation_names):
-                if group_index in cluster_sizes:
-                    relation = Relation(cat1,
-                                        cat2,
-                                        relation_name,
-                                        cluster_sizes[group_index],
-                                        promoted_pairs[group_index])
-                    relations.append(relation)
-
-            for relation_index, context_name in zip(groups, unique_contexts):
-                if relation_index != -1:
-                    context = Context(cat1,
-                                      cat2,
-                                      relation_names[relation_index],
-                                      context_name)
-                    contexts.append(context)
+            relations.extend(exp.data['relations_output'])
+            contexts.extend(exp.data['contexts_output'])
         except Exception as e:
             print(f'Category pair {cat1}, {cat2} failed')
             print(str(e))
