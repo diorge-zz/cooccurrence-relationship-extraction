@@ -282,3 +282,40 @@ class Pruner:
         return {'pruned_groups': pruned_groups,
                 'groups_old': groups_old,
                 'groups': groups_new}
+
+
+class Spanner:
+    def __init__(self,
+                 stretch: float = 5,
+                 cache=False):
+        self.stretch = stretch
+        self.cache = cache
+
+    def __repr__(self):
+        return f'Spanner_{self.stretch}'
+
+    def __str__(self):
+        return repr(self)
+
+    def required_files(self):
+        return []
+
+    def required_data(self):
+        return ['cograph']
+
+    def creates(self):
+        return []
+
+    def returns(self):
+        return ['cograph']
+
+    def apply(self,
+              cograph: nx.Graph,
+              **kwargs
+              ) -> Dict[str, Any]:
+        spanned = nx.algorithms.spanner(cograph, self.stretch, 'weight')
+
+        logger.debug(f'Spanning from {cograph.number_of_edges()}'
+                     f' to {spanned.number_of_edges()} edges')
+
+        return {'cograph': spanned}

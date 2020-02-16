@@ -150,6 +150,7 @@ def run(category_pairs, output_dir):
                      preproc.FilterInstanceInCategory(),
                      experiment.SvoToMemory(),
                      ncm.BuildCooccurrenceGraph(),
+                     ncm.Spanner(5),
                      ncm.NcmHcsw(),
                      ncm.Medoids(),
                      ncm.PromotePairs(),
