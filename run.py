@@ -144,10 +144,10 @@ def run(category_pairs, output_dir):
             pair_output_dir = os.path.join(output_dir, directory_name)
 
             steps = (preproc.FilterSentencesByOccurrence(5),
-                     preproc.MinimumContextOccurrence(3),
                      preproc.MinimumPairOccurrence(5),
                      experiment.ReadCategories(cat1_dir, cat2_dir),
                      preproc.FilterInstanceInCategory(),
+                     preproc.MinimumContextOccurrence(3),
                      experiment.SvoToMemory(),
                      ncm.BuildCooccurrenceGraph(),
                      ncm.Spanner(5),
@@ -209,6 +209,7 @@ def main(category_pairs: List[Tuple[str, str]] = None):
                                              usecols=['cat1', 'cat2'])
         category_pairs = (category_pairs_table.apply(tuple, axis='columns')
                                               .tolist())
+
     return run(category_pairs, output_dir)
 
 
