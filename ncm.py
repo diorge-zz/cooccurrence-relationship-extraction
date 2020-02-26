@@ -60,7 +60,8 @@ class BuildCooccurrenceGraph:
 
         logger.info(f'Created cograph,'
                     f' |V|={cograph.number_of_nodes()}'
-                    f' |E|={cograph.number_of_edges()}')
+                    f' |E|={cograph.number_of_edges()}'
+                    f' size={cograph.size()}')
 
         return {'cograph': cograph}
 

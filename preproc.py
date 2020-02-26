@@ -2,8 +2,12 @@
 """
 
 
+import logging
 import os
 from collections import defaultdict
+
+
+logger = logging.getLogger(__name__)
 
 
 class FilterSentencesByOccurrence:
@@ -122,12 +126,22 @@ class MinimumContextOccurrence:
             occ = self.count(svo_file)
 
         new_svo_path = os.path.join(output_dir, 'svo')
+
+        input_size = 0
+        output_size = 0
+
         with open(new_svo_path, 'w') as outstream:
             with open(svo, 'r') as instream:
                 for line in instream:
                     s, v, o, n = line.split('\t')
+                    input_size += 1
                     if occ[v] >= self.minimum_sentences:
                         outstream.write(line)
+                        output_size += 1
+
+        logger.debug(f'Applied self=<{repr(self)}>'
+                     f' filtering input_size=<{input_size}> lines'
+                     f' to output_size=<{output_size}> lines')
 
     def count(self, svo_file):
         occurrences = defaultdict(lambda: 0)
